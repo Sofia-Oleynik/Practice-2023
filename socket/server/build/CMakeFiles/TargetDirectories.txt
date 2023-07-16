@@ -1,0 +1,9 @@
+/home/sofia/src/socket/server/build/CMakeFiles/my_server.dir
+/home/sofia/src/socket/server/build/CMakeFiles/package.dir
+/home/sofia/src/socket/server/build/CMakeFiles/package_source.dir
+/home/sofia/src/socket/server/build/CMakeFiles/edit_cache.dir
+/home/sofia/src/socket/server/build/CMakeFiles/rebuild_cache.dir
+/home/sofia/src/socket/server/build/CMakeFiles/list_install_components.dir
+/home/sofia/src/socket/server/build/CMakeFiles/install.dir
+/home/sofia/src/socket/server/build/CMakeFiles/install/local.dir
+/home/sofia/src/socket/server/build/CMakeFiles/install/strip.dir

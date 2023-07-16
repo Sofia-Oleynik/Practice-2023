@@ -1,0 +1,9 @@
+[Unit]
+Description=Server
+
+[Service]
+Type =simple
+ExecStart =/home/sofia/src/socket/server/build
+
+[Install]
+WantedBy=multi-user.target

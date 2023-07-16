@@ -1,0 +1,9 @@
+Architecture: amd64
+Description: my_server built using CMake
+Maintainer: AM
+Package: my_server
+Priority: optional
+Section: devel
+Version: 0.1.1
+Installed-Size: 25
+

@@ -1,0 +1,5 @@
+Package: my_client
+Version: 1.0
+Architecture: amd64
+Maintainer: Sofia Oleynik <so.oleynik@gmail.com>
+Description: My App Client
