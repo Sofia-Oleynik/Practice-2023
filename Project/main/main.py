@@ -1,6 +1,9 @@
 import sys
 import time
+import pygame
+import datetime
 import math
+import csv
 import numpy as np
 import mediapipe as mp
 import cv2
@@ -16,11 +19,26 @@ HEIGHT = windll.user32.GetSystemMetrics(1)
 
 FLAG = False
 
+pygame.init()
+
+"""
+count = 0
+my_time = 0
+day = 0
+statistics = [[], []]
+today = datetime.date.today()
+if today > datetime.date(2023, 7, 23):
+    day += 1
+    today = datetime.date(2023, 7, 23)
+    statistics[day][0] = today
+"""
+
 global_cap = cv2.VideoCapture(0)
 
 def skeleton_recognition():
     global global_cap
     global FLAG
+    global count
     mp_drawing = mp.solutions.drawing_utils
     mp_pose = mp.solutions.pose
 
@@ -38,7 +56,7 @@ def skeleton_recognition():
     time_32 = 0
     time_4 = 0
 
-    waiting_time = 600
+    waiting_time = 300
 
     min_spine_length = 0.0
 
@@ -67,7 +85,7 @@ def skeleton_recognition():
 
 
     with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:  # установка порогов доверия
-        while cap.isOpened():
+        while FLAG:
 
             ret, frame = cap.read()
 
@@ -134,12 +152,20 @@ def skeleton_recognition():
                     local_flag = True
                     if local_flag:
                         print(code_0)
-                        time.sleep(7)
+                        pygame.mixer.music.load("brue.mp3")
+                        pygame.mixer.music.play()
+                        pygame.time.wait(2000)
+                        pygame.mixer.music.stop()
+                        time.sleep(5)
                         local_flag = False
                     min_spine_length = math.sqrt(
                         (avg_point_shoulder[0] - avg_point_hip[0]) ** 2 + (
                                     avg_point_shoulder[1] - avg_point_hip[1]) ** 2)
                     print(code_1)
+                    pygame.mixer.music.load("tuturu.mp3")
+                    pygame.mixer.music.play()
+                    pygame.time.wait(2000)
+                    pygame.mixer.music.stop()
                     flag_spine = True
 
                 if abs(math.sqrt((avg_point_shoulder[0] - avg_point_hip[0]) ** 2 + (
@@ -150,6 +176,8 @@ def skeleton_recognition():
                         time_31 = 0
                 else:
                     time_31 = 0
+                    count += 1
+
                 # считаем угол между туловищем и ногами
                 angle_l_spine = calculate_angle(left_shoulder, left_hip, left_knee)
                 angle_r_spine = calculate_angle(right_shoulder, right_hip, right_knee)
@@ -161,6 +189,7 @@ def skeleton_recognition():
                         time_32 = 0
                 else:
                     time_32 = 0
+                    count += 1
 
                 # ---------------------------------------------------------------------------------1 контроль головы
                 # приблизительно одна прямая уха и средней точки плечевого пояса
@@ -173,6 +202,7 @@ def skeleton_recognition():
                         time_11 = 0
                 else:
                     time_11 = 0
+                    count += 1
 
                 # приблизительно одна прямая уха и носа
 
@@ -183,6 +213,7 @@ def skeleton_recognition():
                         time_12 = 0
                 else:
                     time_12 = 0
+                    count += 1
 
                 # ---------------------------------------------------------------------------------4 контроль ног
 
@@ -199,6 +230,7 @@ def skeleton_recognition():
                         time_4 = 0
                 else:
                     time_4 = 0
+                    count += 1
 
 
             except:  # если у нас есть не все точки или появилась какая-то ошибка, то мы не разрываем цикл, а просто его пропускаем
@@ -210,7 +242,7 @@ def skeleton_recognition():
                                       mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2)
                                       )
 
-            #cv2.imshow('Mediapipe Feed', image)
+            cv2.imshow('Mediapipe Feed', image)
             if cv2.waitKey(10) & 0xFF == ord('q'):
                 break
 
@@ -267,7 +299,7 @@ class PageMain(QWidget):
         self.btn_parent.setObjectName("btn_parent")
         self.btn_parent.clicked.connect(self.open_page_input_pw)
 
-        self.lbl_molod = QLabel('Молодец! Ты сидишь правильно          минут!', self)
+        self.lbl_molod = QLabel('Ты сегодня сидишь правильно ' + str(0) + ' минут!', self)
         self.lbl_molod.setGeometry(WIDTH / 2 + 80, HEIGHT / 2 - 50, WIDTH - 180 - WIDTH / 2, 30)
         font = QtGui.QFont()
         font.setFamily("MS Reference Sans Serif")
@@ -351,13 +383,20 @@ class PageMain(QWidget):
         global FLAG
         FLAG = True
         skeleton_recognition()
-        print(FLAG)
 
 
     def push_off(self):
+        """
+        global count
+        global my_time
+        global day
+        global statistics
+        my_time += count / 1200
+        count = 0
+        statistics[day][1] += my_time
+        """
         global FLAG
         FLAG = False
-        cv2.destroyAllWindows()
         print(FLAG)
 
 
@@ -641,3 +680,11 @@ if __name__ == "__main__":
     main_page.show()
     #skeleton_recognition()
     sys.exit(app.exec_())
+    """
+    with open("data.csv", "w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(["Date", "Time"])
+        for row in statistics:
+            writer.writerow(row)
+    """
+    pygame.quit()
