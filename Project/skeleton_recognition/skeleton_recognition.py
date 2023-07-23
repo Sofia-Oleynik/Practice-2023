@@ -14,10 +14,13 @@ from ctypes import *
 WIDTH = windll.user32.GetSystemMetrics(0)
 HEIGHT = windll.user32.GetSystemMetrics(1)
 
+FLAG = False
+
 global_cap = cv2.VideoCapture(0)
 
 def skeleton_recognition():
     global global_cap
+    global FLAG
     mp_drawing = mp.solutions.drawing_utils
     mp_pose = mp.solutions.pose
 
@@ -62,8 +65,10 @@ def skeleton_recognition():
 
     cap = global_cap
 
+
     with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:  # установка порогов доверия
         while cap.isOpened():
+
             ret, frame = cap.read()
 
             # изменение цвета на RGB формат
@@ -205,10 +210,10 @@ def skeleton_recognition():
                                       mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2)
                                       )
 
-            cv2.imshow('Mediapipe Feed', image)
-
+            #cv2.imshow('Mediapipe Feed', image)
             if cv2.waitKey(10) & 0xFF == ord('q'):
                 break
+
 
         cv2.destroyAllWindows()
 
@@ -285,6 +290,7 @@ class PageMain(QWidget):
         font.setWeight(75)
         self.btn_start.setFont(font)
         self.btn_start.setObjectName("btn_start")
+        self.btn_start.clicked.connect(self.push_on)
 
         self.btn_stop = QPushButton('СТОП', self)
         self.btn_stop.setStyleSheet("background-color: #e76f51;"
@@ -298,6 +304,8 @@ class PageMain(QWidget):
         font.setWeight(75)
         self.btn_stop.setFont(font)
         self.btn_stop.setObjectName("btn_stop")
+        self.btn_stop.clicked.connect(self.push_off)
+
 
         self.lbl_transl = QLabel("Трансляция", self)
         # self.lbl_transl.resize(640, 480)
@@ -338,6 +346,20 @@ class PageMain(QWidget):
 
         else:
             self.timer.stop()
+
+    def push_on(self):
+        global FLAG
+        FLAG = True
+        skeleton_recognition()
+        print(FLAG)
+
+
+    def push_off(self):
+        global FLAG
+        FLAG = False
+        cv2.destroyAllWindows()
+        print(FLAG)
+
 
     def open_page_exercise(self):
         self.page_exercise = PageExercise()
@@ -617,6 +639,5 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     main_page = PageMain()
     main_page.show()
-    skeleton_recognition()
+    #skeleton_recognition()
     sys.exit(app.exec_())
-    s.close()
