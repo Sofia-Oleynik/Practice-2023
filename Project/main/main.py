@@ -1,4 +1,5 @@
 import sys
+import pandas as pd
 import time
 import pygame
 import datetime as dt
@@ -31,10 +32,14 @@ with open("data.csv", "r") as file:
 
 FLAG_DATE = False
 if today != str(dt.date.today()):
+    day = int(day)
     day += 1
     FLAG_DATE = True
+    my_time = int(my_time)
     my_time = 0
+    exercise_count = int(exercise_count)
     exercise_count = 0
+    today = dt.date.today(today)
     today = dt.date.today()
 
 global_cap = cv2.VideoCapture(0)
@@ -48,11 +53,11 @@ def skeleton_recognition():
 
     delt_code_1_1 = 0.05
     delt_code_1_2 = 0.02
-    delt_angle_max = 100
-    delt_angle_min = 80
-    delt_code_3_1 = 0.03
+    delt_angle_max = 105
+    delt_angle_min = 75
+    delt_code_3_1 = 0.04
 
-    flag_spine = False
+
 
     time_11 = 0
     time_12 = 0
@@ -90,6 +95,8 @@ def skeleton_recognition():
 
     with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:  # установка порогов доверия
         while FLAG:
+            if count == 0:
+                flag_spine = False
 
             ret, frame = cap.read()
 
@@ -324,7 +331,7 @@ class PageMain(QWidget):
         self.btn_parent.clicked.connect(self.open_page_input_pw)
 
         self.lbl_molod = QLabel('Ты сегодня сидишь правильно ' + str(my_time) + ' минут!', self)
-        self.lbl_molod.setGeometry(WIDTH / 2 + 80, HEIGHT / 2 - 50, WIDTH - 180 - WIDTH / 2, 30)
+        self.lbl_molod.setGeometry(WIDTH / 2 + 120, HEIGHT / 2 - 50, WIDTH - 180 - WIDTH / 2, 30)
         font = QtGui.QFont()
         font.setFamily("MS Reference Sans Serif")
         font.setPointSize(14)
@@ -417,7 +424,7 @@ class PageMain(QWidget):
         global today
         global exercise_count
         my_time = int(my_time)
-        my_time += int(count / 2400)
+        my_time += int(count / 2000)
         count = 0
 
         if FLAG_DATE:
@@ -539,8 +546,10 @@ class PageExercise(QWidget):
             ret, frame = self.cap.read()
             if ret == True:
                 # вывод кадра на виджет
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                img = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                img = QtGui.QImage(
+                    frame_rgb.data, frame_rgb.shape[1], frame_rgb.shape[0], QtGui.QImage.Format_RGB888
+                )
                 self.videoWidget.setPixmap(QPixmap.fromImage(img))
 
                 # запись кадра в файл
@@ -572,6 +581,61 @@ class PageProgress(QWidget):
         self.setGeometry(0, 0, WIDTH, HEIGHT)
         self.setWindowTitle('Прогресс')
 
+        self.lbl_count_exer = QLabel('СЕГОДНЯ', self)
+        self.lbl_count_exer.setGeometry(65, 70, WIDTH - 180 - WIDTH / 2, 30)
+        font = QtGui.QFont()
+        font.setFamily("MS Reference Sans Serif")
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.lbl_count_exer.setFont(font)
+        self.lbl_count_exer.setStyleSheet("color: #f4a261;")
+        self.lbl_count_exer.setObjectName("lbl_count_exer")
+
+        self.lbl_count_exer = QLabel('Количество упражнений для осанки', self)
+        self.lbl_count_exer.setGeometry(65, 150, WIDTH - 180 - WIDTH / 2, 30)
+        font = QtGui.QFont()
+        font.setFamily("MS Reference Sans Serif")
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.lbl_count_exer.setFont(font)
+        self.lbl_count_exer.setStyleSheet("color: #ffffff;")
+        self.lbl_count_exer.setObjectName("lbl_count_exer")
+
+        self.lbl_count_exer = QLabel(str(exercise_count), self)
+        self.lbl_count_exer.setGeometry(300, 230, WIDTH - 180 - WIDTH / 2, 30)
+        font = QtGui.QFont()
+        font.setFamily("MS Reference Sans Serif")
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.lbl_count_exer.setFont(font)
+        self.lbl_count_exer.setStyleSheet("color: #e9c46a;")
+        self.lbl_count_exer.setObjectName("lbl_count_exer")
+
+        self.lbl_count_time = QLabel('Количество минут правильной осанки ', self)
+        self.lbl_count_time.setGeometry(65, 480, WIDTH - 180 - WIDTH / 2, 30)
+        font = QtGui.QFont()
+        font.setFamily("MS Reference Sans Serif")
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.lbl_count_time.setFont(font)
+        self.lbl_count_time.setStyleSheet("color: #ffffff;")
+        self.lbl_count_time.setObjectName("lbl_count_time")
+
+        self.lbl_count_exer = QLabel(str(my_time), self)
+        self.lbl_count_exer.setGeometry(300, 560, WIDTH - 180 - WIDTH / 2, 30)
+        font = QtGui.QFont()
+        font.setFamily("MS Reference Sans Serif")
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.lbl_count_exer.setFont(font)
+        self.lbl_count_exer.setStyleSheet("color: #e76f51;")
+        self.lbl_count_exer.setObjectName("lbl_count_exer")
+
         self.btn_back = QPushButton("Назад", self)
         self.btn_back.setGeometry(WIDTH - 120 - 40, HEIGHT - 100 - 50, 120, 50)
         font = QtGui.QFont()
@@ -582,6 +646,26 @@ class PageProgress(QWidget):
         self.btn_back.setStyleSheet("background-color: #e76f51;\n"
                                     "border-radius: 10px;")
         self.btn_back.clicked.connect(self.open_main_page)
+
+        self.lbl_graf_exer = QLabel("График упражнений", self)
+        self.lbl_count_exer.setGeometry(300, 560, WIDTH - 180 - WIDTH / 2, 30)
+        self.lbl_graf_exer.setFixedSize(WIDTH / 2 - 20, HEIGHT - 50)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.lbl_graf_exer)
+        self.setLayout(layout)
+
+        data = pd.read_csv('data.csv')
+        plt.plot(data['Day'], data['Exercises'])
+        plt.xlabel('Day')
+        plt.xlabel('Exercises')
+
+        plt.savefig('graf_exer.png')
+
+        pixmap = QPixmap('graf_exer.png')
+        self.lbl_graf_exer.setPixmap(pixmap)
+
+
 
     def open_main_page(self):
         self.page_main = PageMain()
