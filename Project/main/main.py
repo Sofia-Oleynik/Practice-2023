@@ -5,6 +5,7 @@ import datetime
 import math
 import csv
 import numpy as np
+import datetime as dt
 import mediapipe as mp
 import cv2
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, \
@@ -20,7 +21,6 @@ FLAG = False
 
 pygame.init()
 
-"""
 count = 0
 my_time = 0
 day = 0
@@ -30,7 +30,6 @@ if today > datetime.date(2023, 7, 23):
     day += 1
     today = datetime.date(2023, 7, 23)
     statistics[day][0] = today
-"""
 
 
 
@@ -347,7 +346,7 @@ class PageMain(QWidget):
     def push_on(self):
         global FLAG
         FLAG = True
-        #skeleton_recognition()
+        skeleton_recognition()
         print(FLAG)
 
 
@@ -453,7 +452,8 @@ class PageExercise(QWidget):
 
         # создание объекта записи видео в формате AVI
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        self.out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480))
+        self.out = cv2.VideoWriter((str(dt.datetime.now().date())+str(dt.datetime.now().time()))[:12]+".avi",
+                                   fourcc, 20.0, (640, 480))
 
         # запуск цикла чтения и записи кадров с камеры
         while (self.cap.isOpened()):
@@ -461,13 +461,14 @@ class PageExercise(QWidget):
             if ret == True:
                 # вывод кадра на виджет
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                #img = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
+                img = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
+                self.videoWidget.setPixmap(QPixmap.fromImage(img))
+                '''
                 h, w, ch = frame.shape
                 bytes_per_line = ch * w
                 q_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
-                #self.videoWidget.setPixmap(QPixmap.fromImage(img))
                 self.videoWidget.setPixmap(QPixmap.fromImage(q_image))
-
+                '''
                 # запись кадра в файл
                 self.out.write(frame)
 
@@ -483,7 +484,18 @@ class PageExercise(QWidget):
         # остановка записи видео в файл
         self.out.release()
 
-
+    '''
+    def update_frame(self):
+        # Обновление кадра и отображение в метке
+        ret, frame = self.camera.read()
+        if ret:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            h, w, ch = frame.shape
+            bytes_per_line = ch * w
+            q_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+            pixmap = QPixmap.fromImage(q_image)
+            self.label.setPixmap(pixmap)
+    '''
     def open_main_page(self):
         self.page_main = PageMain()
         self.page_main.show()
@@ -599,21 +611,45 @@ class PageParent(QWidget):
         font.setPointSize(12)
         font.setWeight(75)
         self.btn_back.setFont(font)
-        self.btn_back.setStyleSheet("background-color: #e76f51;\n"
+        self.btn_back.setStyleSheet("background-color: #f4a261;\n"
                                     "border-radius: 10px;")
         self.btn_back.clicked.connect(self.open_main_page)
 
         # Создание кнопки "Посмотреть"
         self.btn_play = QPushButton('Посмотреть', self)
-        self.btn_play.setGeometry(WIDTH / 2 + WIDTH/4 - 100, HEIGHT / 2 - 250, 200, 70)
+        self.btn_play.setGeometry(WIDTH / 2 + 100, HEIGHT / 2 - 250, WIDTH - 200 - WIDTH / 2 , 70)
         font = QtGui.QFont()
         font.setFamily("MS Reference Sans Serif")
         font.setPointSize(12)
         font.setWeight(75)
         self.btn_play.setFont(font)
-        self.btn_play.setStyleSheet("background-color: #2a9d8f;\n"
+        self.btn_play.setStyleSheet("background-color: #e9c46a;\n"
                                     "border-radius: 10px;")
         self.btn_play.clicked.connect(self.play_video)
+        # Создание кнопки "Принять"
+        self.btn_accept = QPushButton('Принять', self)
+        self.btn_accept.setGeometry(WIDTH / 2 + 100, HEIGHT / 2 - 150, 200, 70)
+        font = QtGui.QFont()
+        font.setFamily("MS Reference Sans Serif")
+        font.setPointSize(12)
+        font.setWeight(75)
+        self.btn_accept.setFont(font)
+        self.btn_accept.setStyleSheet("background-color: #2a9d8f;\n"
+                                    "border-radius: 10px;")
+        #!!!!!self.btn_accept.clicked.connect(self.play_video)
+
+        # Создание кнопки "Отклонить"
+        self.btn_reject = QPushButton('Отклонить', self)
+        self.btn_reject.setGeometry(WIDTH - 100 - 200, HEIGHT / 2 - 150, 200, 70)
+        font = QtGui.QFont()
+        font.setFamily("MS Reference Sans Serif")
+        font.setPointSize(12)
+        font.setWeight(75)
+        self.btn_reject.setFont(font)
+        self.btn_reject.setStyleSheet("background-color: #e76f51;\n"
+                                    "border-radius: 10px;")
+        #!!!!!self.btn_reject.clicked.connect(self.play_video)
+
 
         # Создание метки для отображения видео-потока
         self.lbl_video = QLabel("Видео-поток", self)
@@ -651,14 +687,11 @@ class PageParent(QWidget):
         self.hide()
 
 if __name__ == "__main__":
-    #cap = cv2.VideoCapture(0)
     global_cap = cv2.VideoCapture(0)
     app = QApplication(sys.argv)
     main_page = PageMain()
     main_page.show()
-    #skeleton_recognition()
-    global_cap.release()
-    sys.exit(app.exec_())
+    sys.exit((app.exec_(), global_cap.release()))
 
 
     """
