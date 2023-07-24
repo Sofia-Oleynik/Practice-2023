@@ -13,7 +13,6 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import QTimer
 from ctypes import *
-
 WIDTH = windll.user32.GetSystemMetrics(0)
 HEIGHT = windll.user32.GetSystemMetrics(1)
 
@@ -33,7 +32,8 @@ if today > datetime.date(2023, 7, 23):
     statistics[day][0] = today
 """
 
-global_cap = cv2.VideoCapture(0)
+
+
 
 def skeleton_recognition():
     global global_cap
@@ -47,15 +47,14 @@ def skeleton_recognition():
     delt_angle_max = 100
     delt_angle_min = 80
     delt_code_3_1 = 0.03
-
     flag_spine = False
-
     time_11 = 0
     time_12 = 0
     time_31 = 0
     time_32 = 0
     time_4 = 0
 
+    waiting_time = 600
     waiting_time = 300
 
     min_spine_length = 0.0
@@ -67,24 +66,20 @@ def skeleton_recognition():
     code_4 = '4'
     code_0 = '0'
     code_1 = '1'
-
     def calculate_angle(a, b, c):
         a = np.array(a)  # первая точка
         b = np.array(b)  # вторая точка
         c = np.array(c)  # третья точка
-
         radians = np.arctan2(c[1] - b[1], c[0] - b[0]) - np.arctan2(a[1] - b[1], a[0] - b[0])
         angle = np.abs(radians * 180.0 / np.pi)
-
         if angle > 180.0:
             angle = 360 - angle
-
         return angle
-
     cap = global_cap
 
 
     with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:  # установка порогов доверия
+        while cap.isOpened():
         while FLAG:
 
             ret, frame = cap.read()
@@ -92,14 +87,11 @@ def skeleton_recognition():
             # изменение цвета на RGB формат
             image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image.flags.writeable = False  # без записи
-
             # обнаружение
             results = pose.process(image)
-
             # обратно меняем цвет
             image.flags.writeable = True  # записываем
             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
             try:
                 landmarks = results.pose_landmarks.landmark  # выводим только фактические точки (если они за пределами, не выводим)
                 # ------------------координаты ориентиров
@@ -107,24 +99,18 @@ def skeleton_recognition():
                                  landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER].y]
                 right_shoulder = [landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER].x,
                                   landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER].y]
-
                 left_hip = [landmarks[mp_pose.PoseLandmark.LEFT_HIP].x, landmarks[mp_pose.PoseLandmark.LEFT_HIP].y]
                 right_hip = [landmarks[mp_pose.PoseLandmark.RIGHT_HIP].x, landmarks[mp_pose.PoseLandmark.RIGHT_HIP].y]
-
                 left_ear = [landmarks[mp_pose.PoseLandmark.LEFT_EAR].x, landmarks[mp_pose.PoseLandmark.LEFT_EAR].y]
                 right_ear = [landmarks[mp_pose.PoseLandmark.RIGHT_EAR].x, landmarks[mp_pose.PoseLandmark.RIGHT_EAR].y]
                 nose = [landmarks[mp_pose.PoseLandmark.NOSE].x, landmarks[mp_pose.PoseLandmark.NOSE].y]
-
-
                 left_knee = [landmarks[mp_pose.PoseLandmark.LEFT_KNEE].x, landmarks[mp_pose.PoseLandmark.LEFT_KNEE].y]
                 right_knee = [landmarks[mp_pose.PoseLandmark.RIGHT_KNEE].x,
                               landmarks[mp_pose.PoseLandmark.RIGHT_KNEE].y]
-
                 left_ankle = [landmarks[mp_pose.PoseLandmark.LEFT_ANKLE].x,
                               landmarks[mp_pose.PoseLandmark.LEFT_ANKLE].y]
                 right_ankle = [landmarks[mp_pose.PoseLandmark.RIGHT_ANKLE].x,
                                landmarks[mp_pose.PoseLandmark.RIGHT_ANKLE].y]
-
                 # ------------------отрисовка средней линии позвоночника
                 # отрисовка средней точки плечевого пояса
                 avg_point_shoulder = (
@@ -139,19 +125,17 @@ def skeleton_recognition():
                            (int(avg_point_hip[0] * frame.shape[1]), int(avg_point_hip[1] * frame.shape[0])), 5,
                            (0, 0, 255),
                            -1)
-
                 cv2.line(image,
                          (int(avg_point_shoulder[0] * frame.shape[1]), int(avg_point_shoulder[1] * frame.shape[0])),
                          (int(avg_point_hip[0] * frame.shape[1]), int(avg_point_hip[1] * frame.shape[0])), (255, 0, 0),
                          2)
-
                 # ---------------------------------------------------------------------------------3 контроль спины
                 # определение длины позвоночника при сутулости
-
                 while flag_spine != True:
                     local_flag = True
                     if local_flag:
                         print(code_0)
+                        time.sleep(7)
                         pygame.mixer.music.load("brue.mp3")
                         pygame.mixer.music.play()
                         pygame.time.wait(2000)
@@ -181,7 +165,6 @@ def skeleton_recognition():
                 # считаем угол между туловищем и ногами
                 angle_l_spine = calculate_angle(left_shoulder, left_hip, left_knee)
                 angle_r_spine = calculate_angle(right_shoulder, right_hip, right_knee)
-
                 if angle_l_spine > delt_angle_max or angle_l_spine < delt_angle_min or angle_r_spine > delt_angle_max or angle_r_spine < delt_angle_min:
                     time_32 += 1
                     if time_32 > waiting_time:
@@ -193,7 +176,6 @@ def skeleton_recognition():
 
                 # ---------------------------------------------------------------------------------1 контроль головы
                 # приблизительно одна прямая уха и средней точки плечевого пояса
-
                 if abs(avg_point_shoulder[0] - right_ear[0]) > delt_code_1_1 or abs(
                         avg_point_shoulder[0] - left_ear[0]) > delt_code_1_1:
                     time_11 += 1
@@ -220,9 +202,7 @@ def skeleton_recognition():
                 # считаем угол по трем точкам
                 angle_l_foot = calculate_angle(left_hip, left_knee, left_ankle)
                 angle_r_foot = calculate_angle(right_hip, right_knee, right_ankle)
-
                 # выводим угол в поток изображения
-
                 if angle_l_foot > delt_angle_max or angle_l_foot < delt_angle_min or angle_r_foot > delt_angle_max or angle_r_foot < delt_angle_min:
                     time_4 += 1
                     if time_4 > waiting_time:
@@ -235,17 +215,16 @@ def skeleton_recognition():
 
             except:  # если у нас есть не все точки или появилась какая-то ошибка, то мы не разрываем цикл, а просто его пропускаем
                 pass
-
             # рисуем в image результаты обнаружения (точки) и соединения, устанавливая цвет и размеры
             mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
                                       mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=2),
                                       mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2)
                                       )
 
+            #cv2.imshow('Mediapipe Feed', image)
             cv2.imshow('Mediapipe Feed', image)
             if cv2.waitKey(10) & 0xFF == ord('q'):
                 break
-
 
         cv2.destroyAllWindows()
 
@@ -254,12 +233,10 @@ class PageMain(QWidget):
     def __init__(self):
         super().__init__()
         self.init_ui()
-
     def init_ui(self):
         self.setStyleSheet("background-color: #264653;")
         self.setGeometry(0, 0, WIDTH, HEIGHT)
         self.setWindowTitle('Коррекция осанки')
-
         self.btn_progress = QPushButton("Посмотреть прогресс", self)
         self.btn_progress.setGeometry(WIDTH / 2 + 100, HEIGHT / 2 + 50, WIDTH - 200 - WIDTH / 2, 50)
         font = QtGui.QFont()
@@ -272,7 +249,6 @@ class PageMain(QWidget):
                                         "border-radius: 10px;")
         self.btn_progress.setObjectName("btn_progress")
         self.btn_progress.clicked.connect(self.open_page_progress)
-
         self.btn_do_exer = QPushButton('Выполнить упражнения', self)
         self.btn_do_exer.setGeometry(WIDTH / 2 + 100, HEIGHT / 2 + 110, WIDTH - 200 - WIDTH / 2, 50)
         font = QtGui.QFont()
@@ -285,7 +261,6 @@ class PageMain(QWidget):
                                        "border-radius: 10px;")
         self.btn_do_exer.setObjectName("btn_do_exer")
         self.btn_do_exer.clicked.connect(self.open_page_exercise)
-
         self.btn_parent = QPushButton("Родительский режим", self)
         self.btn_parent.setGeometry(WIDTH / 2 + 100, HEIGHT / 2 + 170, WIDTH - 200 - WIDTH / 2, 50)
         font = QtGui.QFont()
@@ -299,6 +274,7 @@ class PageMain(QWidget):
         self.btn_parent.setObjectName("btn_parent")
         self.btn_parent.clicked.connect(self.open_page_input_pw)
 
+        #self.lbl_molod = QLabel('Молодец! Ты сидишь правильно          минут!', self)
         self.lbl_molod = QLabel('Ты сегодня сидишь правильно ' + str(0) + ' минут!', self)
         self.lbl_molod.setGeometry(WIDTH / 2 + 80, HEIGHT / 2 - 50, WIDTH - 180 - WIDTH / 2, 30)
         font = QtGui.QFont()
@@ -309,7 +285,6 @@ class PageMain(QWidget):
         self.lbl_molod.setFont(font)
         self.lbl_molod.setStyleSheet("color: #ffffff")
         self.lbl_molod.setObjectName("lbl_molod")
-
         self.btn_start = QPushButton('CТАРТ', self)
         self.btn_start.setStyleSheet("background-color: #2a9d8f;"
                                      "color: rgb(255, 255, 255);"
@@ -323,7 +298,6 @@ class PageMain(QWidget):
         self.btn_start.setFont(font)
         self.btn_start.setObjectName("btn_start")
         self.btn_start.clicked.connect(self.push_on)
-
         self.btn_stop = QPushButton('СТОП', self)
         self.btn_stop.setStyleSheet("background-color: #e76f51;"
                                     "color: #ffffff;"
@@ -337,8 +311,6 @@ class PageMain(QWidget):
         self.btn_stop.setFont(font)
         self.btn_stop.setObjectName("btn_stop")
         self.btn_stop.clicked.connect(self.push_off)
-
-
         self.lbl_transl = QLabel("Трансляция", self)
         # self.lbl_transl.resize(640, 480)
         self.lbl_transl.move(60, 60)
@@ -350,22 +322,17 @@ class PageMain(QWidget):
         self.lbl_transl.setFont(font)
         self.lbl_transl.setStyleSheet("color: #ffffff;")
         self.lbl_transl.setObjectName("lbl_transl")
-
         self.lbl_video = QLabel("Видео-поток", self)
         self.lbl_video.setFixedSize(WIDTH / 2 - 20, HEIGHT - 50)
-
         layout = QVBoxLayout()
         layout.addWidget(self.lbl_video)
         self.setLayout(layout)
-
         self.camera = global_cap
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_video_stream)
         self.timer.start(30)
-
     def update_video_stream(self):
         # Чтение кадра видео
-
         ret, frame = self.camera.read()
         if ret:
             # Преобразование кадра в формат QImage
@@ -375,14 +342,13 @@ class PageMain(QWidget):
             )
             # Отображение кадра на виджете QLabel
             self.lbl_video.setPixmap(QtGui.QPixmap.fromImage(image))
-
         else:
             self.timer.stop()
-
     def push_on(self):
         global FLAG
         FLAG = True
-        skeleton_recognition()
+        #skeleton_recognition()
+        print(FLAG)
 
 
     def push_off(self):
@@ -397,6 +363,7 @@ class PageMain(QWidget):
         """
         global FLAG
         FLAG = False
+        cv2.destroyAllWindows()
         print(FLAG)
 
 
@@ -404,12 +371,10 @@ class PageMain(QWidget):
         self.page_exercise = PageExercise()
         self.page_exercise.show()
         self.hide()
-
     def open_page_progress(self):
         self.page_progress = PageProgress()
         self.page_progress.show()
         self.hide()
-
     def open_page_input_pw(self):
         self.page_input_pw = PageInputPassword()
         self.page_input_pw.show()
@@ -420,13 +385,10 @@ class PageExercise(QWidget):
     def __init__(self):
         super().__init__()
         self.init_ui()
-
     def init_ui(self):
-
         self.setStyleSheet("background-color: #264653;")
         self.setGeometry(0, 0, WIDTH, HEIGHT)
         self.setWindowTitle('Упражнения')
-
         self.btn_back = QPushButton("Назад", self)
         self.btn_back.setGeometry(WIDTH - 120 - 40, HEIGHT - 100 - 50, 120, 50)
         font = QtGui.QFont()
@@ -437,13 +399,13 @@ class PageExercise(QWidget):
         self.btn_back.setStyleSheet("background-color: #e76f51;\n"
                                     "border-radius: 10px;")
         self.btn_back.clicked.connect(self.open_main_page)
-
         # Создание кнопок "Старт" и "Стоп"
         self.btn_start = QPushButton('CТАРТ', self)
         self.btn_start.setStyleSheet("background-color: #2a9d8f;"
                                      "color: rgb(255, 255, 255);"
                                      "border-radius: 10px;")
-        self.btn_start.setGeometry(WIDTH / 2 + 100, HEIGHT / 2 - 250, 200, 70)
+        #self.btn_start.setGeometry(WIDTH / 2 + 100, HEIGHT / 2 - 250, 200, 70)
+        self.btn_start.resize(100, 30)
         font = QtGui.QFont()
         font.setFamily("MS Reference Sans Serif")
         font.setPointSize(18)
@@ -451,13 +413,14 @@ class PageExercise(QWidget):
         font.setWeight(75)
         self.btn_start.setFont(font)
         self.btn_start.setObjectName("btn_start")
-        self.btn_start.clicked.connect(self.start_camera)
+        self.btn_start.clicked.connect(self.start_recording)
 
         self.btn_stop = QPushButton('СТОП', self)
         self.btn_stop.setStyleSheet("background-color: #e76f51;"
                                     "color: #ffffff;"
                                     "border-radius: 10px;")
-        self.btn_stop.setGeometry(WIDTH - 100 - 200, HEIGHT / 2 - 250, 200, 70)
+        #self.btn_stop.setGeometry(WIDTH - 100 - 200, HEIGHT / 2 - 250, 200, 70)
+        self.btn_stop.resize(100, 30)
         font = QtGui.QFont()
         font.setFamily("MS Reference Sans Serif")
         font.setBold(True)
@@ -465,46 +428,61 @@ class PageExercise(QWidget):
         font.setWeight(75)
         self.btn_stop.setFont(font)
         self.btn_stop.setObjectName("btn_stop")
-        self.btn_stop.clicked.connect(self.stop_camera)
+        self.btn_stop.clicked.connect(self.stop_recording)
 
-        # Создание метки для отображения видео-потока
-        self.label = QLabel(self)
-        self.label.resize(640, 480)
-        self.label.move(50, 100)
+        # создание виджета для вывода видео-потока
+        self.videoWidget = QLabel(self)
+        self.videoWidget.resize(640, 480)
 
-        # Инициализация переменных
-        self.camera = None
-        self.timer = QTimer()
+        #self.videoWidget.setMinimumSize(WIDTH - 20, HEIGHT - 20)
 
-    def start_camera(self):
-        # Включение камеры
-        self.camera = cv2.VideoCapture(0)
-        self.timer.timeout.connect(self.update_frame)
-        self.timer.start(30)  # Обновление кадра каждые 30 мс
+        # создание главного вертикального лэйаута
+        self.vbox = QVBoxLayout()
+        #self.vbox.setFixedSize(800, 600)
+        self.vbox.addWidget(self.btn_start)
+        self.vbox.addWidget(self.btn_stop)
+        self.vbox.addWidget(self.btn_back)
+        self.vbox.addWidget(self.videoWidget)
 
-    def stop_camera(self):
-        # Выключение камеры и сохранение видео-потока в файл
-        self.timer.stop()
-        filename, _ = QFileDialog.getSaveFileName(self, 'Сохранить файл', '', 'Видео (*.avi)')
-        if filename:
-            fourcc = cv2.VideoWriter_fourcc(*'XVID')
-            out = cv2.VideoWriter(filename, fourcc, 20.0, (640, 480))
-            ret, frame = self.camera.read()
-            if ret:
-                out.write(frame)
-            self.camera.release()
-            out.release()
+        # установка лэйаута в окно
+        self.setLayout(self.vbox)
 
-    def update_frame(self):
-        # Обновление кадра и отображение в метке
-        ret, frame = self.camera.read()
-        if ret:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            h, w, ch = frame.shape
-            bytes_per_line = ch * w
-            q_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
-            pixmap = QPixmap.fromImage(q_image)
-            self.label.setPixmap(pixmap)
+    def start_recording(self):
+        # создание объекта захвата видео с камеры
+        self.cap = global_cap
+
+        # создание объекта записи видео в формате AVI
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        self.out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480))
+
+        # запуск цикла чтения и записи кадров с камеры
+        while (self.cap.isOpened()):
+            ret, frame = self.cap.read()
+            if ret == True:
+                # вывод кадра на виджет
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                #img = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
+                h, w, ch = frame.shape
+                bytes_per_line = ch * w
+                q_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+                #self.videoWidget.setPixmap(QPixmap.fromImage(img))
+                self.videoWidget.setPixmap(QPixmap.fromImage(q_image))
+
+                # запись кадра в файл
+                self.out.write(frame)
+
+                # обновление виджета
+                QApplication.processEvents()
+            else:
+                break
+
+    def stop_recording(self):
+        # остановка захвата видео с камеры
+        #self.cap.release()
+
+        # остановка записи видео в файл
+        self.out.release()
+
 
     def open_main_page(self):
         self.page_main = PageMain()
@@ -516,7 +494,6 @@ class PageProgress(QWidget):
     def __init__(self):
         super().__init__()
         self.init_ui()
-
     def init_ui(self):
         self.setStyleSheet("background-color: #264653;")
         self.setGeometry(0, 0, WIDTH, HEIGHT)
@@ -532,7 +509,6 @@ class PageProgress(QWidget):
         self.btn_back.setStyleSheet("background-color: #e76f51;\n"
                                     "border-radius: 10px;")
         self.btn_back.clicked.connect(self.open_main_page)
-
     def open_main_page(self):
         self.page_main = PageMain()
         self.page_main.show()
@@ -543,12 +519,10 @@ class PageInputPassword(QWidget):
     def __init__(self):
         super().__init__()
         self.init_ui()
-
     def init_ui(self):
         self.setStyleSheet("background-color: #264653;")
         self.setGeometry(WIDTH / 2 - 200, 200, 400, 200)
         self.setWindowTitle("Ввод пароля")
-
         self.lbl_password = QLabel('Введите пароль: ', self)
         self.lbl_password.setGeometry(50, 70, 1300, 30)
         font = QtGui.QFont()
@@ -557,12 +531,10 @@ class PageInputPassword(QWidget):
         font.setWeight(75)
         self.lbl_password.setFont(font)
         self.lbl_password.setStyleSheet("color: #ffffff;")
-
         self.lned_input_pw = QLineEdit(self)
         self.lned_input_pw.setEchoMode(QLineEdit.Password)
         self.lned_input_pw.setGeometry(210, 70, 110, 20)
         self.lned_input_pw.setStyleSheet("color: #ffffff;")
-
         self.btn_submit = QPushButton('Отправить', self)
         self.btn_submit.setGeometry(150, 130, 110, 30)
         font = QtGui.QFont()
@@ -573,7 +545,6 @@ class PageInputPassword(QWidget):
         self.btn_submit.setStyleSheet("background-color: #e9c46a;\n"
                                       "border-radius: 10px;")
         self.btn_submit.clicked.connect(self.check_password)
-
         self.btn_back = QPushButton("Назад", self)
         self.btn_back.setGeometry(320, 160, 70, 30)
         font = QtGui.QFont()
@@ -584,15 +555,12 @@ class PageInputPassword(QWidget):
         self.btn_back.setStyleSheet("background-color: #e76f51;\n"
                                     "border-radius: 10px;")
         self.btn_back.clicked.connect(self.open_main_page)
-
     def open_main_page(self):
         self.page_main = PageMain()
         self.page_main.show()
         self.hide()
-
     def check_password(self):
         password = self.lned_input_pw.text()
-
         if password == '1234':
             self.open_page_parent()
         else:
@@ -605,12 +573,10 @@ class PageInputPassword(QWidget):
             error.buttonClicked.connect(self.popup_action)
             error.exec_()
             # QMessageBox.warning(self, "Ошибка доступа", 'Введен не верный пароль')
-
     def popup_action(self, btn):
         # self.lbl_password.setText('')
         self.lned_input_pw.setText('')
         # print("print ok")
-
     def open_page_parent(self):
         self.page_parent = PageParent()
         self.page_parent.show()
@@ -621,30 +587,43 @@ class PageParent(QWidget):
     def __init__(self):
         super().__init__()
         self.init_ui()
-
     def init_ui(self):
         self.setStyleSheet("background-color: #264653;")
         self.setGeometry(0, 0, WIDTH, HEIGHT)
         self.setWindowTitle('Родительский режим')
 
         self.btn_back = QPushButton("Назад", self)
-        self.btn_back.setGeometry(10, 10, 50, 20)
+        self.btn_back.setGeometry(WIDTH - 120 - 40, HEIGHT - 100 - 50, 120, 50)
+        font = QtGui.QFont()
+        font.setFamily("MS Reference Sans Serif")
+        font.setPointSize(12)
+        font.setWeight(75)
+        self.btn_back.setFont(font)
+        self.btn_back.setStyleSheet("background-color: #e76f51;\n"
+                                    "border-radius: 10px;")
         self.btn_back.clicked.connect(self.open_main_page)
 
         # Создание кнопки "Посмотреть"
         self.btn_play = QPushButton('Посмотреть', self)
-        self.btn_play.move(70, 40)
+        self.btn_play.setGeometry(WIDTH / 2 + WIDTH/4 - 100, HEIGHT / 2 - 250, 200, 70)
+        font = QtGui.QFont()
+        font.setFamily("MS Reference Sans Serif")
+        font.setPointSize(12)
+        font.setWeight(75)
+        self.btn_play.setFont(font)
+        self.btn_play.setStyleSheet("background-color: #2a9d8f;\n"
+                                    "border-radius: 10px;")
         self.btn_play.clicked.connect(self.play_video)
 
         # Создание метки для отображения видео-потока
         self.lbl_video = QLabel("Видео-поток", self)
         self.lbl_video.setFixedSize(WIDTH/2-20, HEIGHT-50)
-
         self.lbl_video.resize(640, 480)
-        self.lbl_video.move(50, 100)
+        self.lbl_video.move(50, 50)
 
         # Инициализация переменных
         self.cap = None
+
 
     def play_video(self):
         # Выбор файла видео
@@ -661,25 +640,27 @@ class PageParent(QWidget):
                     bytes_per_line = ch * w
                     q_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
                     pixmap = QPixmap.fromImage(q_image)
-                    self.label.setPixmap(pixmap)
+                    self.lbl_video.setPixmap(pixmap)
                     QApplication.processEvents()  # Обновление интерфейса
                 else:
                     break
             self.cap.release()
-
     def open_main_page(self):
         self.page_main = PageMain()
         self.page_main.show()
         self.hide()
 
-
 if __name__ == "__main__":
     #cap = cv2.VideoCapture(0)
+    global_cap = cv2.VideoCapture(0)
     app = QApplication(sys.argv)
     main_page = PageMain()
     main_page.show()
     #skeleton_recognition()
+    global_cap.release()
     sys.exit(app.exec_())
+
+
     """
     with open("data.csv", "w", newline="") as file:
         writer = csv.writer(file)
