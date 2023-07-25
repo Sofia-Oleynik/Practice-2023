@@ -470,24 +470,22 @@ class PageExercise(QWidget):
         self.init_ui()
 
     def init_ui(self):
-
         self.setStyleSheet("background-color: #264653;")
         self.setGeometry(0, 0, WIDTH, HEIGHT)
         self.setWindowTitle('Упражнения')
 
         self.btn_back = QPushButton("Назад", self)
-        self.btn_back.setGeometry(WIDTH - 120 - 40, HEIGHT - 100 - 50, 120, 50)
         font = QtGui.QFont()
         font.setFamily("MS Reference Sans Serif")
-        font.setPointSize(12)
+        font.setPointSize(18)
         font.setWeight(75)
         self.btn_back.setFont(font)
-        self.btn_back.setStyleSheet("background-color: #e76f51;\n"
+        self.btn_back.setStyleSheet("background-color: #e9c46a;\n"
                                     "border-radius: 10px;")
         self.btn_back.clicked.connect(self.open_main_page)
 
         # Создание кнопок "Старт" и "Стоп"
-        self.btn_start = QPushButton('CТАРТ', self)
+        self.btn_start = QPushButton('Cтарт', self)
         self.btn_start.setStyleSheet("background-color: #2a9d8f;"
                                      "color: rgb(255, 255, 255);"
                                      "border-radius: 10px;")
@@ -501,7 +499,7 @@ class PageExercise(QWidget):
         self.btn_start.setObjectName("btn_start")
         self.btn_start.clicked.connect(self.start_recording)
 
-        self.btn_stop = QPushButton('СТОП', self)
+        self.btn_stop = QPushButton('Стоп', self)
         self.btn_stop.setStyleSheet("background-color: #e76f51;"
                                     "color: #ffffff;"
                                     "border-radius: 10px;")
@@ -519,11 +517,8 @@ class PageExercise(QWidget):
         self.videoWidget = QLabel(self)
         self.videoWidget.resize(640, 480)
 
-        # self.videoWidget.setMinimumSize(WIDTH - 20, HEIGHT - 20)
-
         # создание главного вертикального лэйаута
         self.vbox = QVBoxLayout()
-        # self.vbox.setFixedSize(800, 600)
         self.vbox.addWidget(self.btn_start)
         self.vbox.addWidget(self.btn_stop)
         self.vbox.addWidget(self.btn_back)
