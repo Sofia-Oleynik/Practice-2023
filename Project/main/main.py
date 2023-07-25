@@ -39,10 +39,9 @@ if today != str(dt.date.today()):
     my_time = 0
     exercise_count = int(exercise_count)
     exercise_count = 0
-    today = dt.date.today(today)
+    today = dt.date(2003, 2, 24)
     today = dt.date.today()
 
-global_cap = cv2.VideoCapture(0)
 
 def skeleton_recognition():
     global global_cap
@@ -431,6 +430,7 @@ class PageMain(QWidget):
             with open("data.csv", "a", newline="") as file:
                 writer = csv.writer(file)
                 writer.writerow([day, today, my_time, exercise_count])
+                FLAG_DATE = False
         else:
             with open("data.csv", "r") as file:
                 reader = csv.reader(file)
@@ -581,60 +581,60 @@ class PageProgress(QWidget):
         self.setGeometry(0, 0, WIDTH, HEIGHT)
         self.setWindowTitle('Прогресс')
 
-        self.lbl_count_exer = QLabel('СЕГОДНЯ', self)
-        self.lbl_count_exer.setGeometry(65, 70, WIDTH - 180 - WIDTH / 2, 30)
+        self.lbl_today = QLabel('СЕГОДНЯ', self)
+        self.lbl_today.setGeometry(WIDTH/2 + WIDTH/4 - 70, 70, WIDTH - 180 - WIDTH / 2, 30)
+        font = QtGui.QFont()
+        font.setFamily("MS Reference Sans Serif")
+        font.setPointSize(18)
+        font.setBold(True)
+        font.setWeight(75)
+        self.lbl_today.setFont(font)
+        self.lbl_today.setStyleSheet("color: #f4a261;")
+        self.lbl_today.setObjectName("lbl_today")
+
+        self.lbl_str_exer = QLabel('Количество упражнений для осанки', self)
+        self.lbl_str_exer.setGeometry(WIDTH/2 + 100, 200, WIDTH - 180 - WIDTH / 2, 30)
         font = QtGui.QFont()
         font.setFamily("MS Reference Sans Serif")
         font.setPointSize(14)
         font.setBold(True)
         font.setWeight(75)
+        self.lbl_str_exer.setFont(font)
+        self.lbl_str_exer.setStyleSheet("color: #ffffff;")
+        self.lbl_str_exer.setObjectName("lbl_str_exer")
+
+        self.lbl_count_exer = QLabel(str(exercise_count), self)  # счетчик упражнений
+        self.lbl_count_exer.setGeometry(WIDTH/2 + WIDTH/4 - 50, 280, 100, 60)
+        font = QtGui.QFont()
+        font.setFamily("MS Reference Sans Serif")
+        font.setPointSize(33)
+        font.setBold(True)
+        font.setWeight(75)
         self.lbl_count_exer.setFont(font)
-        self.lbl_count_exer.setStyleSheet("color: #f4a261;")
+        self.lbl_count_exer.setStyleSheet("color: #2a9d8f;")
         self.lbl_count_exer.setObjectName("lbl_count_exer")
 
-        self.lbl_count_exer = QLabel('Количество упражнений для осанки', self)
-        self.lbl_count_exer.setGeometry(65, 150, WIDTH - 180 - WIDTH / 2, 30)
+        self.lbl_str_time = QLabel('Количество минут правильной осанки ', self)
+        self.lbl_str_time.setGeometry(WIDTH/2 + 100, 380, WIDTH - 180 - WIDTH / 2, 30)
         font = QtGui.QFont()
         font.setFamily("MS Reference Sans Serif")
         font.setPointSize(14)
         font.setBold(True)
         font.setWeight(75)
-        self.lbl_count_exer.setFont(font)
-        self.lbl_count_exer.setStyleSheet("color: #ffffff;")
-        self.lbl_count_exer.setObjectName("lbl_count_exer")
+        self.lbl_str_time.setFont(font)
+        self.lbl_str_time.setStyleSheet("color: #ffffff;")
+        self.lbl_str_time.setObjectName("lbl_str_time")
 
-        self.lbl_count_exer = QLabel(str(exercise_count), self)
-        self.lbl_count_exer.setGeometry(300, 230, WIDTH - 180 - WIDTH / 2, 30)
+        self.lbl_count_time = QLabel(str(my_time), self)  # счетчик времени
+        self.lbl_count_time.setGeometry(WIDTH/2 + WIDTH/4 - 50, 460, 100, 60)
         font = QtGui.QFont()
         font.setFamily("MS Reference Sans Serif")
-        font.setPointSize(14)
-        font.setBold(True)
-        font.setWeight(75)
-        self.lbl_count_exer.setFont(font)
-        self.lbl_count_exer.setStyleSheet("color: #e9c46a;")
-        self.lbl_count_exer.setObjectName("lbl_count_exer")
-
-        self.lbl_count_time = QLabel('Количество минут правильной осанки ', self)
-        self.lbl_count_time.setGeometry(65, 480, WIDTH - 180 - WIDTH / 2, 30)
-        font = QtGui.QFont()
-        font.setFamily("MS Reference Sans Serif")
-        font.setPointSize(14)
+        font.setPointSize(33)
         font.setBold(True)
         font.setWeight(75)
         self.lbl_count_time.setFont(font)
-        self.lbl_count_time.setStyleSheet("color: #ffffff;")
+        self.lbl_count_time.setStyleSheet("color: #2a9d8f;")
         self.lbl_count_time.setObjectName("lbl_count_time")
-
-        self.lbl_count_exer = QLabel(str(my_time), self)
-        self.lbl_count_exer.setGeometry(300, 560, WIDTH - 180 - WIDTH / 2, 30)
-        font = QtGui.QFont()
-        font.setFamily("MS Reference Sans Serif")
-        font.setPointSize(14)
-        font.setBold(True)
-        font.setWeight(75)
-        self.lbl_count_exer.setFont(font)
-        self.lbl_count_exer.setStyleSheet("color: #e76f51;")
-        self.lbl_count_exer.setObjectName("lbl_count_exer")
 
         self.btn_back = QPushButton("Назад", self)
         self.btn_back.setGeometry(WIDTH - 120 - 40, HEIGHT - 100 - 50, 120, 50)
@@ -648,7 +648,6 @@ class PageProgress(QWidget):
         self.btn_back.clicked.connect(self.open_main_page)
 
         self.lbl_graf_exer = QLabel("График упражнений", self)
-        self.lbl_count_exer.setGeometry(300, 560, WIDTH - 180 - WIDTH / 2, 30)
         self.lbl_graf_exer.setFixedSize(WIDTH / 2 - 20, HEIGHT - 50)
 
         layout = QVBoxLayout()
@@ -671,7 +670,6 @@ class PageProgress(QWidget):
         self.page_main = PageMain()
         self.page_main.show()
         self.hide()
-
 
 
 class PageInputPassword(QWidget):
@@ -830,6 +828,7 @@ class PageParent(QWidget):
             with open("data.csv", "a", newline="") as file:
                 writer = csv.writer(file)
                 writer.writerow([day, today, my_time, exercise_count])
+                FLAG_DATE = False
         else:
             with open("data.csv", "r") as file:
                 reader = csv.reader(file)
@@ -874,7 +873,10 @@ if __name__ == "__main__":
     global_cap = cv2.VideoCapture(0)
     app = QApplication(sys.argv)
     main_page = PageMain()
-    main_page.show()
-    sys.exit(app.exec_(), global_cap.release(), pygame.quit())
+    pygame.mixer.music.load("Voices/start.mp3")
+    pygame.mixer.music.play()
+    pygame.time.wait(3000)
+    pygame.mixer.music.stop()
+    sys.exit((app.exec_(), global_cap.release(), pygame.quit()))
 
 
