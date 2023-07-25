@@ -873,6 +873,7 @@ if __name__ == "__main__":
     global_cap = cv2.VideoCapture(0)
     app = QApplication(sys.argv)
     main_page = PageMain()
+    main_page.show()
     pygame.mixer.music.load("Voices/start.mp3")
     pygame.mixer.music.play()
     pygame.time.wait(3000)
