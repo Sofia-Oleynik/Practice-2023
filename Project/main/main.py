@@ -96,7 +96,7 @@ def skeleton_recognition():
         while FLAG:
             if count == 0:
                 flag_spine = False
-
+            count += 1
             ret, frame = cap.read()
 
             # изменение цвета на RGB формат
@@ -874,5 +874,3 @@ if __name__ == "__main__":
     pygame.time.wait(3000)
     pygame.mixer.music.stop()
     sys.exit((app.exec_(), global_cap.release(), pygame.quit()))
-
-
